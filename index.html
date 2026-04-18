@@ -3,23 +3,40 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Claude Code × AI Agent 完全ガイド — AIE 2026 日本語解説</title>
+<title>Claude Code × AI Agent 完全ガイド — AI Engineer Fair 2026</title>
 <meta name="description" content="Anthropic / AWS / Google Cloud 公式5セッション（131分）を日本語で徹底解説。Claude Codeベストプラクティス・Bedrock/Vertex AIでのエージェント構築・Claude Code SDK/GitHub Actions・MCP深掘り。" />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;0,8..60,800;1,8..60,400&family=Inter:wght@400;500;600;700&family=Shippori+Mincho:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
     theme: {
       extend: {
         fontFamily: {
-          sans: ['"Noto Sans JP"', '"Inter"', 'system-ui', 'sans-serif'],
+          serif: ['"Source Serif 4"', '"Shippori Mincho"', 'Georgia', 'serif'],
+          jp: ['"Shippori Mincho"', '"Source Serif 4"', 'serif'],
+          sans: ['"Inter"', '"Noto Sans JP"', 'system-ui', 'sans-serif'],
           mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
         },
         colors: {
+          // Anthropic brand palette
+          cream: {
+            50: '#FEFCF8',  // lightest bg
+            100: '#F5F1E8', // main bg (Anthropic site)
+            200: '#EDE8DC',
+            300: '#D9D4C4',
+          },
+          clay: {
+            400: '#E8A583',
+            500: '#D97757', // Claude signature (Chai/Clay)
+            600: '#CC5E3D', // darker accent
+            700: '#A84B2E',
+          },
           ink: {
-            50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1',
-            400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155',
-            800: '#1e293b', 900: '#0f172a', 950: '#020617',
+            700: '#3F3A35',
+            800: '#2C2926',
+            900: '#1A1915', // near-black warm
           },
         },
       },
@@ -28,569 +45,614 @@
 </script>
 <style>
   html { scroll-behavior: smooth; }
-  body { background: #0b1020; color: #e2e8f0; }
-  .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); }
-  .glass-light { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
-  .hero-gradient {
-    background: linear-gradient(-45deg, #0f172a, #1e1b4b, #312e81, #0f172a);
-    background-size: 400% 400%;
-    animation: gradient 15s ease infinite;
+  body {
+    background: #F5F1E8;
+    color: #1A1915;
+    font-feature-settings: "palt" 1;
   }
-  .text-gradient {
-    background: linear-gradient(135deg, #fb923c 0%, #f59e0b 50%, #ec4899 100%);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
-  .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-  .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 60px -10px rgba(249, 115, 22, 0.2); }
+  .font-serif-jp { font-family: '"Shippori Mincho"', serif; }
+  .rule-top { border-top: 1px solid rgba(26,25,21,0.12); }
+  .rule-between > * + * { border-top: 1px solid rgba(26,25,21,0.12); }
   details summary { cursor: pointer; list-style: none; }
   details summary::-webkit-details-marker { display: none; }
   details[open] summary .chevron { transform: rotate(90deg); }
-  .chevron { transition: transform 0.2s; }
-  .marker-dot::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #fb923c; margin-right: 12px; vertical-align: middle; }
-  @keyframes gradient { 0%,100% {background-position:0% 50%} 50% {background-position:100% 50%} }
+  .chevron { transition: transform 0.2s ease; }
+  .link-underline { background-image: linear-gradient(currentColor, currentColor); background-size: 0% 1px; background-repeat: no-repeat; background-position: 0 100%; transition: background-size .4s ease; }
+  .link-underline:hover { background-size: 100% 1px; }
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: #CC5E3D; font-weight: 600;
+  }
+  .hero-eyebrow::before {
+    content: ''; width: 24px; height: 1px; background: #CC5E3D;
+  }
+  .card {
+    background: #FEFCF8; border: 1px solid rgba(26,25,21,0.08);
+    transition: border-color .2s ease, transform .2s ease;
+  }
+  .card:hover { border-color: rgba(217,119,87,0.5); }
+  .tag { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #6B6762; font-weight: 500; }
+  .drop-cap::first-letter { float: left; font-family: '"Source Serif 4"', serif; font-size: 4rem; line-height: 0.85; margin: 0.1rem 0.6rem 0 0; font-weight: 500; color: #CC5E3D; }
+  .h-dash { display: inline-block; width: 40px; height: 1px; background: currentColor; vertical-align: middle; margin-right: 16px; opacity: 0.4; }
+  .bullet-square::before {
+    content: ''; display: inline-block; width: 6px; height: 6px; background: #D97757; margin-right: 14px; margin-bottom: 3px; vertical-align: middle;
+  }
+  /* subtle grain */
+  body::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; opacity: 0.03; z-index: 1;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
 </style>
 </head>
-<body class="font-sans antialiased">
+<body class="antialiased selection:bg-clay-500/20">
 
-<nav class="fixed top-0 left-0 right-0 z-50 glass">
+<!-- NAV -->
+<nav class="sticky top-0 z-40 bg-cream-100/80 backdrop-blur-md border-b border-ink-900/10">
   <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-    <a href="#top" class="flex items-center gap-2">
-      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center font-black text-sm">C</div>
-      <span class="font-bold">Code w/ Claude</span>
+    <a href="#top" class="flex items-center gap-2.5">
+      <svg viewBox="0 0 32 32" class="w-7 h-7 text-clay-500" fill="currentColor">
+        <path d="M16 3 L28 10 L28 22 L16 29 L4 22 L4 10 Z" opacity="0.15"/>
+        <path d="M16 8 L22 12 L22 20 L16 24 L10 20 L10 12 Z"/>
+      </svg>
+      <span class="font-serif text-lg tracking-tight">Code w/ Claude</span>
     </a>
-    <div class="hidden md:flex items-center gap-8 text-sm text-ink-300">
-      <a href="#videos" class="hover:text-white transition">動画</a>
-      <a href="#practices" class="hover:text-white transition">ベスプラ</a>
-      <a href="#mcp" class="hover:text-white transition">MCP</a>
-      <a href="#get" class="px-4 py-2 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white font-semibold hover:opacity-90 transition">LINEで受け取る</a>
+    <div class="hidden md:flex items-center gap-8 text-sm">
+      <a href="#videos" class="text-ink-700 hover:text-ink-900 link-underline">Sessions</a>
+      <a href="#practices" class="text-ink-700 hover:text-ink-900 link-underline">Best Practices</a>
+      <a href="#mcp" class="text-ink-700 hover:text-ink-900 link-underline">MCP</a>
+      <a href="#get" class="px-4 py-2 bg-ink-900 text-cream-100 text-sm hover:bg-clay-600 transition">LINEで受け取る →</a>
     </div>
   </div>
 </nav>
 
-<section id="top" class="hero-gradient relative overflow-hidden pt-32 pb-24 px-6">
-  <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle at 30% 20%, #fb923c 0%, transparent 50%), radial-gradient(circle at 70% 80%, #ec4899 0%, transparent 50%);"></div>
-  <div class="max-w-6xl mx-auto relative">
-    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-xs font-semibold text-orange-300 mb-8">
-      <span class="w-2 h-2 rounded-full bg-orange-400 animate-pulse"></span>
-      AI Engineer Fair 2026 · San Francisco · Anthropic公式
-    </div>
-    <h1 class="text-5xl md:text-7xl font-black leading-tight tracking-tight mb-6">
-      <span class="text-gradient">Claude Code</span><br />
-      × AI Agent<br />
-      <span class="text-white">完全ガイド</span>
+<!-- HERO -->
+<section id="top" class="px-6 pt-24 pb-32 relative">
+  <div class="max-w-5xl mx-auto">
+    <div class="hero-eyebrow mb-8">AI Engineer Fair 2026 · San Francisco</div>
+    <h1 class="font-serif-jp text-5xl md:text-7xl font-medium leading-[1.1] tracking-tight mb-10 text-ink-900">
+      Claude Codeの<br />
+      <span class="italic text-clay-600">中の使い方。</span>
     </h1>
-    <p class="text-xl md:text-2xl text-ink-300 max-w-3xl mb-10 leading-relaxed">
-      Anthropic / AWS / Google Cloud 公式セッション<strong class="text-white">5本・131分</strong>を<br class="hidden md:block"/>
-      日本語で徹底解説。「中の人」だけが知る実務パターンが全部入り。
+    <p class="font-sans text-lg md:text-xl text-ink-700 max-w-3xl leading-relaxed mb-14">
+      Anthropic / AWS / Google Cloud の公式セッション5本、合計131分。<br class="hidden md:block" />
+      AIE 2026から、日本語でまとめ直した実務パターン集。
     </p>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mb-12">
-      <div class="glass-light rounded-2xl p-6">
-        <div class="text-4xl font-black text-gradient mb-1">5</div>
-        <div class="text-sm text-ink-400">公式セッション</div>
+    <!-- STATS -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-0 rule-top border-t border-ink-900/15 pt-10">
+      <div class="border-r border-ink-900/10 pr-6">
+        <div class="tag mb-2">Sessions</div>
+        <div class="font-serif text-5xl font-medium text-ink-900">05</div>
       </div>
-      <div class="glass-light rounded-2xl p-6">
-        <div class="text-4xl font-black text-gradient mb-1">131<span class="text-lg">分</span></div>
-        <div class="text-sm text-ink-400">動画総尺</div>
+      <div class="md:border-r border-ink-900/10 md:pr-6 pl-0 md:pl-6">
+        <div class="tag mb-2">Duration</div>
+        <div class="font-serif text-5xl font-medium text-ink-900">131<span class="text-2xl text-ink-700 ml-1">min</span></div>
       </div>
-      <div class="glass-light rounded-2xl p-6">
-        <div class="text-4xl font-black text-gradient mb-1">7<span class="text-lg">名</span></div>
-        <div class="text-sm text-ink-400">スピーカー</div>
+      <div class="border-r border-ink-900/10 pr-6 mt-8 md:mt-0 md:pl-6">
+        <div class="tag mb-2">Speakers</div>
+        <div class="font-serif text-5xl font-medium text-ink-900">07</div>
       </div>
-      <div class="glass-light rounded-2xl p-6">
-        <div class="text-4xl font-black text-gradient mb-1">25k+</div>
-        <div class="text-sm text-ink-400">字の日本語解説</div>
+      <div class="mt-8 md:mt-0 md:pl-6">
+        <div class="tag mb-2">日本語解説</div>
+        <div class="font-serif text-5xl font-medium text-ink-900">25k<span class="text-2xl text-ink-700 ml-1">字</span></div>
       </div>
     </div>
 
-    <div class="flex flex-wrap items-center gap-4">
-      <a href="#get" class="px-8 py-4 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white font-bold text-lg hover:shadow-2xl hover:shadow-orange-500/30 transition">
-        👇 受け取る（LINE）
+    <div class="mt-14 flex flex-wrap items-center gap-5">
+      <a href="#get" class="px-8 py-4 bg-ink-900 text-cream-100 font-medium hover:bg-clay-600 transition inline-flex items-center gap-3">
+        LINEで受け取る
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
       </a>
-      <a href="#videos" class="px-8 py-4 rounded-full glass-light text-white font-semibold hover:bg-white/10 transition">
-        内容を見る
+      <a href="#videos" class="px-8 py-4 border border-ink-900 text-ink-900 font-medium hover:bg-ink-900 hover:text-cream-100 transition">
+        ぜんぶ読む
       </a>
     </div>
   </div>
 </section>
 
-<section class="py-24 px-6 bg-gradient-to-b from-ink-950 to-ink-900">
+<!-- DIVIDER -->
+<div class="border-t border-ink-900/15"></div>
+
+<!-- INTRO -->
+<section class="px-6 py-24 bg-cream-50">
   <div class="max-w-5xl mx-auto">
-    <div class="text-sm font-semibold text-orange-400 mb-3">📚 この1ページで得られるもの</div>
-    <h2 class="text-4xl md:text-5xl font-black mb-12">「Claudeを使ってる」<br/>から<span class="text-gradient">「使いこなす」</span>へ。</h2>
-    <div class="grid md:grid-cols-3 gap-6">
-      <div class="glass-light rounded-2xl p-8 card-hover">
-        <div class="text-3xl mb-4">🎯</div>
-        <h3 class="text-xl font-bold mb-3">実務パターン</h3>
-        <p class="text-ink-300 text-sm leading-relaxed">Anthropic社内の<strong class="text-white">80%</strong>が日常的に使うClaude Code運用術。claude.md・Plan Mode・サブエージェント連携・並列セッションまで。</p>
+    <div class="grid md:grid-cols-12 gap-8 items-start">
+      <div class="md:col-span-4">
+        <div class="tag mb-4">Editor's Note</div>
+        <h2 class="font-serif-jp text-3xl md:text-4xl font-medium leading-tight text-ink-900">
+          「Claudeを使ってる」<br/>から、<br/><span class="italic text-clay-600">「使いこなす」</span>へ。
+        </h2>
       </div>
-      <div class="glass-light rounded-2xl p-8 card-hover">
-        <div class="text-3xl mb-4">☁️</div>
-        <h3 class="text-xl font-bold mb-3">クラウド統合</h3>
-        <p class="text-ink-300 text-sm leading-relaxed">AWS Bedrock（Strands Agents SDK）・Google Cloud Vertex AI（ADK）で本番エージェント構築。API Keyなしでも動かせる環境構築手順。</p>
-      </div>
-      <div class="glass-light rounded-2xl p-8 card-hover">
-        <div class="text-3xl mb-4">⚡</div>
-        <h3 class="text-xl font-bold mb-3">SDK × 自動化</h3>
-        <p class="text-ink-300 text-sm leading-relaxed">Claude Code SDKヘッドレスモード、GitHub Actions連携、そして5つのMCPプリミティブ（Prompts/Resources/Tools/Sampling/Roots）。</p>
+      <div class="md:col-span-8 md:pl-8 md:border-l border-ink-900/10">
+        <p class="font-serif text-lg leading-[1.8] text-ink-800 drop-cap">
+          Anthropic社内の<strong>80%</strong>が日常的に使っているClaude Code。その運用術は、公式ドキュメントにはほとんど書かれていません。このページは、AI Engineer Fair 2026でAnthropic本社・AWS・Google Cloudの実務者が語った<strong>5本の動画（合計131分）</strong>を、日本語で読める形に翻訳・要約しました。
+        </p>
+        <p class="font-serif text-lg leading-[1.8] text-ink-800 mt-6">
+          claude.mdの使い方から、BedrockとVertex AIでのエージェント構築、GitHub Actions連携、そしてMCPの5プリミティブ──実務でいま使える内容だけを収録しています。
+        </p>
       </div>
     </div>
   </div>
 </section>
 
-<section id="videos" class="py-24 px-6 bg-ink-900">
+<!-- DIVIDER -->
+<div class="border-t border-ink-900/15"></div>
+
+<!-- VIDEOS -->
+<section id="videos" class="px-6 py-24">
   <div class="max-w-6xl mx-auto">
-    <div class="flex items-end justify-between mb-12">
-      <div>
-        <div class="text-sm font-semibold text-orange-400 mb-3">🎬 5セッション</div>
-        <h2 class="text-4xl md:text-5xl font-black">Anthropic公式<br/>AI Engineer Fair 2026</h2>
+    <div class="grid md:grid-cols-12 gap-8 mb-16 items-end">
+      <div class="md:col-span-8">
+        <div class="tag mb-4">Five Sessions · AIE 2026</div>
+        <h2 class="font-serif-jp text-4xl md:text-5xl font-medium leading-tight text-ink-900">
+          Anthropic公式<br/>AI Engineer Fair 2026
+        </h2>
       </div>
-      <div class="hidden md:block text-ink-400 text-sm">全動画の日本語要点まとめ付き</div>
+      <div class="md:col-span-4 text-sm text-ink-700">
+        各セッションに<strong>日本語の要点</strong>と<strong>詳細サマリー</strong>を付けています。見たい場所から読めます。
+      </div>
     </div>
 
-    <!-- VIDEO 1 -->
-    <div class="glass-light rounded-3xl overflow-hidden mb-6 card-hover">
-      <div class="grid md:grid-cols-5 gap-0">
-        <a href="https://www.youtube.com/watch?v=gv0WHhKelSE" target="_blank" class="md:col-span-2 relative bg-black aspect-video md:aspect-auto overflow-hidden group">
-          <img src="https://i.ytimg.com/vi/gv0WHhKelSE/maxresdefault.jpg" alt="" class="w-full h-full object-cover" />
-          <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition flex items-center justify-center">
-            <div class="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
-              <svg class="w-6 h-6 text-black ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    <div class="rule-between border-t border-ink-900/15">
+
+      <!-- VIDEO 1 -->
+      <article class="py-10 grid md:grid-cols-12 gap-8">
+        <a href="https://www.youtube.com/watch?v=gv0WHhKelSE" target="_blank" class="md:col-span-4 block group">
+          <div class="relative aspect-video overflow-hidden bg-ink-900">
+            <img src="https://i.ytimg.com/vi/gv0WHhKelSE/maxresdefault.jpg" alt="" class="w-full h-full object-cover group-hover:scale-105 transition duration-500"/>
+            <div class="absolute inset-0 bg-ink-900/20 group-hover:bg-ink-900/10 transition flex items-center justify-center">
+              <div class="w-14 h-14 rounded-full bg-cream-50/95 flex items-center justify-center">
+                <svg class="w-5 h-5 text-ink-900 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              </div>
             </div>
+            <div class="absolute bottom-3 right-3 px-2 py-1 bg-ink-900/80 text-cream-100 text-xs font-mono">25:53</div>
           </div>
-          <div class="absolute top-4 left-4 px-3 py-1 rounded-full bg-black/60 text-xs font-mono">25:53</div>
         </a>
-        <div class="md:col-span-3 p-8">
-          <div class="inline-block text-xs font-bold text-orange-400 mb-2">#01 ベストプラクティス</div>
-          <h3 class="text-2xl font-bold mb-1">Claude Codeベストプラクティス</h3>
-          <div class="text-sm text-ink-400 mb-4">スピーカー: Cal（Anthropic / Applied AI）</div>
-          <ul class="space-y-2 text-sm text-ink-200 mb-4">
-            <li class="marker-dot">Claude Codeのメンタルモデル = 「ターミナル上で何でも実行する達人の同僚」</li>
-            <li class="marker-dot">インデックス作成しない設計思想（埋め込み+RAGはやらない）</li>
-            <li class="marker-dot">claude.md・権限管理・コンテキスト管理・Plan Modeの実装パターン</li>
+        <div class="md:col-span-8">
+          <div class="tag mb-2 text-clay-600">No. 01 · Best Practices</div>
+          <h3 class="font-serif-jp text-3xl font-medium text-ink-900 mb-3 leading-tight">Claude Codeベストプラクティス</h3>
+          <div class="text-sm text-ink-700 mb-5 font-sans"><span class="h-dash"></span>Cal（Anthropic / Applied AI）</div>
+          <ul class="space-y-2.5 font-serif text-base text-ink-800 mb-5 leading-relaxed">
+            <li class="bullet-square">Claude Codeのメンタルモデル = 「ターミナル上で何でも実行する達人の同僚」</li>
+            <li class="bullet-square">インデックス作成しない設計思想（埋め込み+RAGはやらない）</li>
+            <li class="bullet-square">claude.md・権限管理・コンテキスト管理・Plan Modeの実装パターン</li>
           </ul>
-          <details>
-            <summary class="flex items-center gap-2 text-orange-400 text-sm font-semibold hover:text-orange-300">
-              <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-              詳細の日本語要約を読む
+          <details class="border-t border-ink-900/10 pt-4">
+            <summary class="flex items-center gap-2 text-clay-600 text-sm font-medium hover:text-clay-700">
+              <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/></svg>
+              日本語サマリーを読む
             </summary>
-            <div class="mt-4 pt-4 border-t border-white/10 text-sm text-ink-300 space-y-4 leading-relaxed">
+            <div class="mt-6 space-y-6 font-serif leading-[1.8] text-ink-800">
               <div>
-                <div class="font-bold text-white mb-1">🧠 アーキテクチャ（ボンネットの下）</div>
-                純粋なエージェント = <strong>指示 + 強力なツール + ループ実行</strong>。ターミナルが得意なこと全部（ファイル作成・bash・MCP連携）できる。<strong class="text-orange-300">インデックス作成は一切しない</strong>。新人が探索するのと同じくglob/grep等でAgentic searchする。
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">アーキテクチャ（ボンネットの下）</div>
+                純粋なエージェント = <em>指示 + 強力なツール + ループ実行</em>。ターミナルが得意なこと全部（ファイル作成・bash・MCP連携）できる。<strong>インデックス作成は一切しない</strong>。新人が探索するのと同じくglob/grep等でAgentic searchする。
               </div>
               <div>
-                <div class="font-bold text-white mb-1">✅ 5つの良い使用例</div>
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">5つの良い使用例</div>
                 ①オンボーディング ②思考パートナー（実装前に「ファイル書かず2-3案出して」）③既存コードベースのテスト強化 ④Claude Code SDK（ヘッドレス）でCI統合 ⑤大規模リファクタ/移行（Java→新版、React→Angular等）
               </div>
               <div>
-                <div class="font-bold text-white mb-1">⭐ 6つのベストプラクティス</div>
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">6つのベストプラクティス</div>
                 ①<strong>claude.md</strong>（プロジェクト直下 or ホーム、チーム共有）②<strong>autoacceptモード</strong>（Shift+Tab）③<strong>CLI優先</strong>（ghなど、MCPより先）④<strong>コンテキスト管理</strong>（200kトークン、/clear・/compact）⑤<strong>計画とTo-Do</strong>（Escで軌道修正）⑥<strong>スマートなバイブコーディング</strong>（小変更+テスト、スクショ活用）
               </div>
               <div>
-                <div class="font-bold text-white mb-1">🚀 高度なテクニック</div>
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">高度なテクニック</div>
                 tmuxで<strong>4つ並列運用</strong>する顧客あり。<strong>Esc 2回で会話履歴に戻れる隠れ機能</strong>。拡張思考（Cloud 4から）はツール呼び出しの「合間」に思考可能で「よく考えて理解して」で発動。
               </div>
               <div>
-                <div class="font-bold text-white mb-1">💡 Q&A抜粋</div>
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">Q&A抜粋</div>
                 「コメントを残すな」問題 → プロンプトに37回書いてもモデルが残したがる → <strong>Cloud 4でほぼ解決</strong>。マルチエージェント間の状態共有は共有マークダウン（ticket.md等）を使う。
               </div>
             </div>
           </details>
         </div>
-      </div>
-    </div>
+      </article>
 
-    <!-- VIDEO 2 -->
-    <div class="glass-light rounded-3xl overflow-hidden mb-6 card-hover">
-      <div class="grid md:grid-cols-5 gap-0">
-        <a href="https://www.youtube.com/watch?v=8gTpgWru0Wg" target="_blank" class="md:col-span-2 relative bg-black aspect-video md:aspect-auto overflow-hidden group">
-          <img src="https://i.ytimg.com/vi/8gTpgWru0Wg/maxresdefault.jpg" alt="" class="w-full h-full object-cover" />
-          <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition flex items-center justify-center">
-            <div class="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
-              <svg class="w-6 h-6 text-black ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-            </div>
-          </div>
-          <div class="absolute top-4 left-4 px-3 py-1 rounded-full bg-black/60 text-xs font-mono">27:16</div>
-        </a>
-        <div class="md:col-span-3 p-8">
-          <div class="inline-block text-xs font-bold text-orange-400 mb-2">#02 AWS × AIエージェント</div>
-          <h3 class="text-2xl font-bold mb-1">Amazon Bedrock × Claude AIエージェント構築</h3>
-          <div class="text-sm text-ink-400 mb-4">スピーカー: Dwane Whitehead / Banjo / Suman DNA（AWS）</div>
-          <ul class="space-y-2 text-sm text-ink-200 mb-4">
-            <li class="marker-dot"><strong>Strands Agents SDK</strong>（2026/4ローンチ）= Model + Tools + Prompt の3要素のみ</li>
-            <li class="marker-dot">Bedrockアカウントで<strong>Claude Code使用（Anthropic APIキー不要）</strong></li>
-            <li class="marker-dot">44行で天気エージェント、40行でMCP経由AWSアーキ図自動生成</li>
-          </ul>
-          <details>
-            <summary class="flex items-center gap-2 text-orange-400 text-sm font-semibold hover:text-orange-300">
-              <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-              詳細の日本語要約を読む
-            </summary>
-            <div class="mt-4 pt-4 border-t border-white/10 text-sm text-ink-300 space-y-4 leading-relaxed">
-              <div>
-                <div class="font-bold text-white mb-1">🤖 エージェントの定義</div>
-                自律型システム。高目標 → 計画作成 → アクション実行 → 結果評価 → 次ステップ判断を人間のようにループ。
+      <!-- VIDEO 2 -->
+      <article class="py-10 grid md:grid-cols-12 gap-8">
+        <a href="https://www.youtube.com/watch?v=8gTpgWru0Wg" target="_blank" class="md:col-span-4 block group">
+          <div class="relative aspect-video overflow-hidden bg-ink-900">
+            <img src="https://i.ytimg.com/vi/8gTpgWru0Wg/maxresdefault.jpg" alt="" class="w-full h-full object-cover group-hover:scale-105 transition duration-500"/>
+            <div class="absolute inset-0 bg-ink-900/20 group-hover:bg-ink-900/10 transition flex items-center justify-center">
+              <div class="w-14 h-14 rounded-full bg-cream-50/95 flex items-center justify-center">
+                <svg class="w-5 h-5 text-ink-900 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
               </div>
+            </div>
+            <div class="absolute bottom-3 right-3 px-2 py-1 bg-ink-900/80 text-cream-100 text-xs font-mono">27:16</div>
+          </div>
+        </a>
+        <div class="md:col-span-8">
+          <div class="tag mb-2 text-clay-600">No. 02 · AWS × Agent</div>
+          <h3 class="font-serif-jp text-3xl font-medium text-ink-900 mb-3 leading-tight">Amazon Bedrock × Claude AIエージェント構築</h3>
+          <div class="text-sm text-ink-700 mb-5 font-sans"><span class="h-dash"></span>Dwane Whitehead / Banjo / Suman DNA（AWS）</div>
+          <ul class="space-y-2.5 font-serif text-base text-ink-800 mb-5 leading-relaxed">
+            <li class="bullet-square"><strong>Strands Agents SDK</strong>（2026/4ローンチ）= Model + Tools + Prompt の3要素のみ</li>
+            <li class="bullet-square">Bedrockアカウントで<strong>Claude Code使用（Anthropic APIキー不要）</strong></li>
+            <li class="bullet-square">44行で天気エージェント、40行でMCP経由AWSアーキ図自動生成</li>
+          </ul>
+          <details class="border-t border-ink-900/10 pt-4">
+            <summary class="flex items-center gap-2 text-clay-600 text-sm font-medium hover:text-clay-700">
+              <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/></svg>
+              日本語サマリーを読む
+            </summary>
+            <div class="mt-6 space-y-6 font-serif leading-[1.8] text-ink-800">
               <div>
-                <div class="font-bold text-white mb-1">⚙️ Strands Agents SDK（オープンソース）</div>
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">Strands Agents SDK（オープンソース）</div>
                 2026/4ローンチ。<strong>Model + Tools + Prompt の3要素のみ</strong>。ガードレール・足場不要。デフォルトはClaude 3.7。大量の組み込みツール。EC2/Lambda/ECSへ簡単デプロイ。リリース3日でコミュニティから多数PR。
               </div>
               <div>
-                <div class="font-bold text-white mb-1">🔧 Claude Code on Bedrock</div>
-                Bedrockアカウントがあれば<strong>Anthropic APIキー不要</strong>。環境変数でClaude CodeをBedrock経由に切替。
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">Claude Code on Bedrock</div>
+                Bedrockアカウントがあれば<strong>Anthropic APIキー不要</strong>。環境変数でClaude CodeをBedrock経由に切替。Bedrockコンソール→モデルアクセス→Claude 3.5 Haiku/Sonnet等を有効化。
               </div>
               <div>
-                <div class="font-bold text-white mb-1">🧪 ハンズオン3例</div>
-                ①<strong>天気エージェント</strong>：44行、<code class="font-mono">@tool</code>デコレータでカスタムツール作成 ②<strong>MCP連携</strong>：AWS公式MCPと40行で接続、Lambda+S3静的サイトのアーキ図を自動生成 ③<strong>CDKエージェント</strong>：Claude Code（Haiku）が完璧なテンプレ生成、セキュリティテスト・nag rules付き
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">ハンズオン3例</div>
+                ①<strong>天気エージェント</strong>：44行、<code class="font-mono text-sm bg-cream-100 px-1.5 py-0.5">@tool</code>デコレータでカスタムツール作成 ②<strong>MCP連携</strong>：AWS公式MCPと40行で接続、Lambda+S3静的サイトのアーキ図を自動生成 ③<strong>CDKエージェント</strong>：Claude Code（Haiku）が完璧なテンプレ生成、セキュリティテスト・nag rules付き
               </div>
               <div>
-                <div class="font-bold text-white mb-1">🧩 MCPサーバー活用例</div>
-                Knowledge base／AWS Cost Analysis／Amazon Nova Canvas／CloudFormation図／Terraform／React特化／Postgres/Neptune。<strong>MCP = LLMの「USB-C」</strong>。API Gateway+LambdaでMCPサーバー自前ホスト可。
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">MCPサーバー活用例</div>
+                Knowledge base／AWS Cost Analysis／Amazon Nova Canvas／CloudFormation図／Terraform／React特化／Postgres/Neptune。<strong>MCP = LLMの「USB-C」</strong>。API Gateway+LambdaでMCPサーバー自前ホスト可（HTTPストリーミング/SSE対応）。
               </div>
             </div>
           </details>
         </div>
-      </div>
-    </div>
+      </article>
 
-    <!-- VIDEO 3 -->
-    <div class="glass-light rounded-3xl overflow-hidden mb-6 card-hover">
-      <div class="grid md:grid-cols-5 gap-0">
-        <a href="https://www.youtube.com/watch?v=TUysIAtxyrQ" target="_blank" class="md:col-span-2 relative bg-black aspect-video md:aspect-auto overflow-hidden group">
-          <img src="https://i.ytimg.com/vi/TUysIAtxyrQ/maxresdefault.jpg" alt="" class="w-full h-full object-cover" />
-          <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition flex items-center justify-center">
-            <div class="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
-              <svg class="w-6 h-6 text-black ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      <!-- VIDEO 3 -->
+      <article class="py-10 grid md:grid-cols-12 gap-8">
+        <a href="https://www.youtube.com/watch?v=TUysIAtxyrQ" target="_blank" class="md:col-span-4 block group">
+          <div class="relative aspect-video overflow-hidden bg-ink-900">
+            <img src="https://i.ytimg.com/vi/TUysIAtxyrQ/maxresdefault.jpg" alt="" class="w-full h-full object-cover group-hover:scale-105 transition duration-500"/>
+            <div class="absolute inset-0 bg-ink-900/20 group-hover:bg-ink-900/10 transition flex items-center justify-center">
+              <div class="w-14 h-14 rounded-full bg-cream-50/95 flex items-center justify-center">
+                <svg class="w-5 h-5 text-ink-900 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              </div>
             </div>
+            <div class="absolute bottom-3 right-3 px-2 py-1 bg-ink-900/80 text-cream-100 text-xs font-mono">30:22</div>
           </div>
-          <div class="absolute top-4 left-4 px-3 py-1 rounded-full bg-black/60 text-xs font-mono">30:22</div>
         </a>
-        <div class="md:col-span-3 p-8">
-          <div class="inline-block text-xs font-bold text-orange-400 mb-2">#03 Google Cloud × AIエージェント</div>
-          <h3 class="text-2xl font-bold mb-1">Google Cloud Vertex AI × Claude</h3>
-          <div class="text-sm text-ink-400 mb-4">スピーカー: Ian Ardini（Google Cloud Developer Advocate）</div>
-          <ul class="space-y-2 text-sm text-ink-200 mb-4">
-            <li class="marker-dot">Google Cloud Agent Stack 4要素: <strong>ADK / MCP / Agent Engine / A2A</strong></li>
-            <li class="marker-dot">Vertex AI Model Garden に<strong>Claude 4を当日朝デプロイ</strong></li>
-            <li class="marker-dot">Agent2Agent Protocol = 異なるフレームワーク間のエージェント通信標準</li>
+        <div class="md:col-span-8">
+          <div class="tag mb-2 text-clay-600">No. 03 · Google Cloud × Agent</div>
+          <h3 class="font-serif-jp text-3xl font-medium text-ink-900 mb-3 leading-tight">Google Cloud Vertex AI × Claude</h3>
+          <div class="text-sm text-ink-700 mb-5 font-sans"><span class="h-dash"></span>Ian Ardini（Google Cloud Developer Advocate）</div>
+          <ul class="space-y-2.5 font-serif text-base text-ink-800 mb-5 leading-relaxed">
+            <li class="bullet-square">Google Cloud Agent Stack 4要素: <strong>ADK / MCP / Agent Engine / A2A</strong></li>
+            <li class="bullet-square">Vertex AI Model Garden に<strong>Claude 4を当日朝デプロイ</strong></li>
+            <li class="bullet-square">Agent2Agent Protocol = 異なるフレームワーク間のエージェント通信標準</li>
           </ul>
-          <details>
-            <summary class="flex items-center gap-2 text-orange-400 text-sm font-semibold hover:text-orange-300">
-              <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-              詳細の日本語要約を読む
+          <details class="border-t border-ink-900/10 pt-4">
+            <summary class="flex items-center gap-2 text-clay-600 text-sm font-medium hover:text-clay-700">
+              <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/></svg>
+              日本語サマリーを読む
             </summary>
-            <div class="mt-4 pt-4 border-t border-white/10 text-sm text-ink-300 space-y-4 leading-relaxed">
+            <div class="mt-6 space-y-6 font-serif leading-[1.8] text-ink-800">
               <div>
-                <div class="font-bold text-white mb-1">⚠️ エージェント本番化の3大課題</div>
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">エージェント本番化の3大課題</div>
                 ①断片化したフレームワーク ②異なるフレームワーク間の通信が困難 ③本番運用（監視・ログ）の管理が大変
               </div>
               <div>
-                <div class="font-bold text-white mb-1">🏗️ Google Cloud Agent Stack（4要素）</div>
-                ①<strong>ADK</strong>：オープンソース、開発者フレンドリー ②<strong>MCP互換</strong>：ツール標準化 ③<strong>Vertex AI Agent Engine</strong>：マネージド ④<strong>A2A Protocol</strong>：異なるフレームワーク間の通信
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">Google Cloud Agent Stack（4要素）</div>
+                ①<strong>ADK</strong>（オープンソース・開発者フレンドリー）②<strong>MCP互換</strong>（エージェントとツール標準化）③<strong>Vertex AI Agent Engine</strong>（マネージドプラットフォーム）④<strong>Agent2Agent Protocol（A2A）</strong>（異なるフレームワーク間の通信）
               </div>
               <div>
-                <div class="font-bold text-white mb-1">🌱 ADK核心概念</div>
-                Sequential等の事前構築パターン／LLM Agent（脳に相当）／Tools（組み込み+カスタム）／Runner（実行調整、CPU/メモリ監視）。<strong>LangGraph, LangChain, CrewAIもサポート</strong>。
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">ADK核心概念</div>
+                Sequential等の事前構築パターン／LLM Agent（脳に相当）／Tools（組み込み+カスタム）／Runner（実行調整、CPU/メモリ監視）。<strong>ADK以外（LangGraph, LangChain, CrewAI）もサポート</strong>。
               </div>
               <div>
-                <div class="font-bold text-white mb-1">🤝 Agent2Agent Protocol（A2A）</div>
-                オープンプロトコル。HTTP/JSON-RPCベース。3概念：<strong>Agent Skill</strong>（能力記述）／<strong>Agent Card</strong>（デジタル名刺）／<strong>Executor</strong>（リクエスト管理）。
-              </div>
-              <div>
-                <div class="font-bold text-white mb-1">✅ まとめ</div>
-                <strong>ADK + MCP + Agent Engine + A2A = エージェント本番化の入り口</strong>。
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">Agent2Agent Protocol（A2A）</div>
+                オープンプロトコル、エンタープライズ対応設計。HTTP/JSON-RPCベース（業界標準）。3概念：<strong>Agent Skill</strong>（能力記述）／<strong>Agent Card</strong>（デジタル名刺）／<strong>Executor</strong>（リクエスト/レスポンス管理）。
               </div>
             </div>
           </details>
         </div>
-      </div>
-    </div>
+      </article>
 
-    <!-- VIDEO 4 -->
-    <div class="glass-light rounded-3xl overflow-hidden mb-6 card-hover">
-      <div class="grid md:grid-cols-5 gap-0">
-        <a href="https://www.youtube.com/watch?v=dRsjO-88nBs" target="_blank" class="md:col-span-2 relative bg-black aspect-video md:aspect-auto overflow-hidden group">
-          <img src="https://i.ytimg.com/vi/dRsjO-88nBs/maxresdefault.jpg" alt="" class="w-full h-full object-cover" />
-          <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition flex items-center justify-center">
-            <div class="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
-              <svg class="w-6 h-6 text-black ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      <!-- VIDEO 4 -->
+      <article class="py-10 grid md:grid-cols-12 gap-8">
+        <a href="https://www.youtube.com/watch?v=dRsjO-88nBs" target="_blank" class="md:col-span-4 block group">
+          <div class="relative aspect-video overflow-hidden bg-ink-900">
+            <img src="https://i.ytimg.com/vi/dRsjO-88nBs/maxresdefault.jpg" alt="" class="w-full h-full object-cover group-hover:scale-105 transition duration-500"/>
+            <div class="absolute inset-0 bg-ink-900/20 group-hover:bg-ink-900/10 transition flex items-center justify-center">
+              <div class="w-14 h-14 rounded-full bg-cream-50/95 flex items-center justify-center">
+                <svg class="w-5 h-5 text-ink-900 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              </div>
             </div>
+            <div class="absolute bottom-3 right-3 px-2 py-1 bg-ink-900/80 text-cream-100 text-xs font-mono">20:58</div>
           </div>
-          <div class="absolute top-4 left-4 px-3 py-1 rounded-full bg-black/60 text-xs font-mono">20:58</div>
         </a>
-        <div class="md:col-span-3 p-8">
-          <div class="inline-block text-xs font-bold text-orange-400 mb-2">#04 SDK × GitHub Actions</div>
-          <h3 class="text-2xl font-bold mb-1">Claude Code SDK & GitHub Actions</h3>
-          <div class="text-sm text-ink-400 mb-4">スピーカー: Sedara（Anthropic / Cloud Codeチーム）</div>
-          <ul class="space-y-2 text-sm text-ink-200 mb-4">
-            <li class="marker-dot">当日<strong>Claude GitHub Actions 発表</strong>（SDK上に構築、OSS）</li>
-            <li class="marker-dot"><code class="font-mono text-xs">claude -p</code>でUnixツール的にパイプ連携・CI自動化</li>
-            <li class="marker-dot"><code class="font-mono text-xs">/install-github-actions</code>一発で設定 → <code class="font-mono text-xs">@claude</code>メンションで使用開始</li>
+        <div class="md:col-span-8">
+          <div class="tag mb-2 text-clay-600">No. 04 · SDK × GitHub Actions</div>
+          <h3 class="font-serif-jp text-3xl font-medium text-ink-900 mb-3 leading-tight">Claude Code SDK & GitHub Actions</h3>
+          <div class="text-sm text-ink-700 mb-5 font-sans"><span class="h-dash"></span>Sedara（Anthropic / Cloud Codeチーム）</div>
+          <ul class="space-y-2.5 font-serif text-base text-ink-800 mb-5 leading-relaxed">
+            <li class="bullet-square">当日<strong>Claude GitHub Actions 発表</strong>（SDK上に構築、オープンソース）</li>
+            <li class="bullet-square"><code class="font-mono text-sm bg-cream-200 px-1.5 py-0.5">claude -p</code>でUnixツール的にパイプ連携・CI自動化</li>
+            <li class="bullet-square"><code class="font-mono text-sm bg-cream-200 px-1.5 py-0.5">/install-github-actions</code>一発で設定 → <code class="font-mono text-sm bg-cream-200 px-1.5 py-0.5">@claude</code>メンションで使用開始</li>
           </ul>
-          <details>
-            <summary class="flex items-center gap-2 text-orange-400 text-sm font-semibold hover:text-orange-300">
-              <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-              詳細の日本語要約を読む
+          <details class="border-t border-ink-900/10 pt-4">
+            <summary class="flex items-center gap-2 text-clay-600 text-sm font-medium hover:text-clay-700">
+              <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/></svg>
+              日本語サマリーを読む
             </summary>
-            <div class="mt-4 pt-4 border-t border-white/10 text-sm text-ink-300 space-y-4 leading-relaxed">
+            <div class="mt-6 space-y-6 font-serif leading-[1.8] text-ink-800">
               <div>
-                <div class="font-bold text-white mb-1">📐 SDKの使い方レベル</div>
-                ①Unixツール的：パイプ連携 ②CI自動化：レビュー・新リンター生成 ③複雑アプリ：チャットボット・リモート環境ビルド ④<strong>Python/TypeScript SDK 近日リリース予定</strong>
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">SDKの使い方レベル</div>
+                ①<strong>Unixツール的</strong>：パイプ連携・makeチェーン ②<strong>CI自動化</strong>：レビュー・新リンター生成 ③<strong>複雑アプリ</strong>：チャットボット・リモート環境ビルド ④Python/TypeScript SDK 近日リリース予定
               </div>
               <div>
-                <div class="font-bold text-white mb-1">⌨️ 基本コマンド例</div>
-<pre class="bg-black/40 rounded-lg p-3 text-xs font-mono overflow-x-auto">claude -p "フィボナッチ書いて" --allowed-tools Write
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">基本コマンド例</div>
+<pre class="font-mono text-sm bg-cream-200 border border-ink-900/10 p-4 overflow-x-auto leading-relaxed">claude -p "フィボナッチ書いて" --allowed-tools Write
 cat app.log | claude -p "要約して"
 claude -p "..." --output-format json</pre>
               </div>
               <div>
-                <div class="font-bold text-white mb-1">🎬 ライブデモ</div>
-                既存OSSクイズアプリに「50/50」「Skip Question」Issue作成 → <strong>Claudeが自動でTo-Doリスト → PR作成</strong>。並行して別Issueも処理。
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">ライブデモ</div>
+                既存OSSクイズアプリに「50/50」「Skip Question」Issue作成 → <strong>Claudeが自動でTo-Doリスト → PR作成</strong>。並行して別Issueも処理。既存PRの「青→緑」変更もサクッと追加コミット。
               </div>
               <div>
-                <div class="font-bold text-white mb-1">🔑 SDKの重要機能</div>
-                ①権限管理（<code class="font-mono">--allowed-tools</code>）②構造化出力（stream-json/json）③システムプロンプト ④セッションID管理（<code class="font-mono">--resume</code>）⑤permission-prompt-tool（MCPに権限委譲）
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">SDKの重要機能</div>
+                ①権限管理（<code class="font-mono text-sm bg-cream-200 px-1.5 py-0.5">--allowed-tools</code>）②構造化出力（stream-json/json）③システムプロンプト ④セッションID管理（<code class="font-mono text-sm bg-cream-200 px-1.5 py-0.5">--resume</code>）⑤permission-prompt-tool（MCPに権限委譲）
               </div>
               <div>
-                <div class="font-bold text-white mb-1">🐙 Claude GitHub Actions</div>
-                PR追加コミット／新規PR作成／質問回答／コードレビュー。<strong>インフラ不要</strong>（既存のGitHub Actions Runnerで動作）。3層構造：SDK → Base Action → PR Action（両方OSS）。
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">Claude GitHub Actions</div>
+                PR追加コミット／新規PR作成／質問回答／コードレビュー。<strong>インフラ不要</strong>（既存のGitHub Actions Runnerで動作）。3層構造：SDK → Base Action → PR Action（両方オープンソース）。
               </div>
             </div>
           </details>
         </div>
-      </div>
-    </div>
+      </article>
 
-    <!-- VIDEO 5 -->
-    <div class="glass-light rounded-3xl overflow-hidden mb-6 card-hover">
-      <div class="grid md:grid-cols-5 gap-0">
-        <a href="https://www.youtube.com/watch?v=HNzH5Us1Rvg" target="_blank" class="md:col-span-2 relative bg-black aspect-video md:aspect-auto overflow-hidden group">
-          <img src="https://i.ytimg.com/vi/HNzH5Us1Rvg/maxresdefault.jpg" alt="" class="w-full h-full object-cover" />
-          <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition flex items-center justify-center">
-            <div class="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
-              <svg class="w-6 h-6 text-black ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      <!-- VIDEO 5 -->
+      <article class="py-10 grid md:grid-cols-12 gap-8">
+        <a href="https://www.youtube.com/watch?v=HNzH5Us1Rvg" target="_blank" class="md:col-span-4 block group">
+          <div class="relative aspect-video overflow-hidden bg-ink-900">
+            <img src="https://i.ytimg.com/vi/HNzH5Us1Rvg/maxresdefault.jpg" alt="" class="w-full h-full object-cover group-hover:scale-105 transition duration-500"/>
+            <div class="absolute inset-0 bg-ink-900/20 group-hover:bg-ink-900/10 transition flex items-center justify-center">
+              <div class="w-14 h-14 rounded-full bg-cream-50/95 flex items-center justify-center">
+                <svg class="w-5 h-5 text-ink-900 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              </div>
             </div>
+            <div class="absolute bottom-3 right-3 px-2 py-1 bg-ink-900/80 text-cream-100 text-xs font-mono">26:31</div>
           </div>
-          <div class="absolute top-4 left-4 px-3 py-1 rounded-full bg-black/60 text-xs font-mono">26:31</div>
         </a>
-        <div class="md:col-span-3 p-8">
-          <div class="inline-block text-xs font-bold text-orange-400 mb-2">#05 MCP 深掘り</div>
-          <h3 class="text-2xl font-bold mb-1">MCP 201 — Model Context Protocol</h3>
-          <div class="text-sm text-ink-400 mb-4">スピーカー: David（Anthropic / MCP共同作成者）</div>
-          <ul class="space-y-2 text-sm text-ink-200 mb-4">
-            <li class="marker-dot"><strong>5つのプリミティブ</strong>: Prompts / Resources / Tools / Sampling / Roots</li>
-            <li class="marker-dot">大半のMCPサーバーはTools呼び出しのみ → <strong>差別化チャンス</strong></li>
-            <li class="marker-dot">Local → Web 移行中（OAuth 2.1 + Streamable HTTP）</li>
+        <div class="md:col-span-8">
+          <div class="tag mb-2 text-clay-600">No. 05 · MCP Deep Dive</div>
+          <h3 class="font-serif-jp text-3xl font-medium text-ink-900 mb-3 leading-tight">MCP 201 — Model Context Protocol</h3>
+          <div class="text-sm text-ink-700 mb-5 font-sans"><span class="h-dash"></span>David（Anthropic / MCP共同作成者）</div>
+          <ul class="space-y-2.5 font-serif text-base text-ink-800 mb-5 leading-relaxed">
+            <li class="bullet-square"><strong>5つのプリミティブ</strong>: Prompts / Resources / Tools / Sampling / Roots</li>
+            <li class="bullet-square">大半のMCPサーバーはTools呼び出しのみ → <strong>差別化チャンス</strong></li>
+            <li class="bullet-square">Local → Web 移行中（OAuth 2.1 + Streamable HTTP）</li>
           </ul>
-          <details>
-            <summary class="flex items-center gap-2 text-orange-400 text-sm font-semibold hover:text-orange-300">
-              <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-              詳細の日本語要約を読む
+          <details class="border-t border-ink-900/10 pt-4">
+            <summary class="flex items-center gap-2 text-clay-600 text-sm font-medium hover:text-clay-700">
+              <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/></svg>
+              日本語サマリーを読む
             </summary>
-            <div class="mt-4 pt-4 border-t border-white/10 text-sm text-ink-300 space-y-4 leading-relaxed">
+            <div class="mt-6 space-y-6 font-serif leading-[1.8] text-ink-800">
               <div>
-                <div class="font-bold text-white mb-1">🧩 5つのプリミティブ</div>
-                <strong>サーバー側3つ</strong>：①Prompts（ユーザー駆動のテンプレ）②Resources（生データをファイル的に公開、<span class="text-orange-300">未開拓領域</span>）③Tools（モデル駆動）。<strong>クライアント側2つ</strong>：④Sampling（LLM補完要求、<span class="text-orange-300">最もサポートが薄い</span>）⑤Roots（開いているディレクトリをサーバーに伝える）
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">5つのプリミティブ</div>
+                <strong>サーバー側3つ</strong>：①Prompts（ユーザー駆動のテンプレ、スラッシュコマンド表示） ②Resources（生データをファイル的に公開、<em>未開拓領域</em>）③Tools（モデル駆動でアクション実行）。<strong>クライアント側2つ</strong>：④Sampling（MCPサーバーがクライアントにLLM補完要求、<em>最もサポートが薄い</em>）⑤Roots（開いているディレクトリをサーバーに伝える）
               </div>
               <div>
-                <div class="font-bold text-white mb-1">👥 インタラクションモデル</div>
-                Prompts → <strong>ユーザー駆動</strong>／Resources → <strong>アプリ駆動</strong>／Tools → <strong>モデル駆動</strong>。<strong>AI・User・Application 3者が異なる粒度で関与可能</strong>。
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">インタラクションモデル</div>
+                Prompts → <strong>ユーザー駆動</strong>／Resources → <strong>アプリケーション駆動</strong>／Tools → <strong>モデル駆動</strong>。AI・User・Application 3者が異なる粒度で関与可能 → Tools単独より遥かにリッチな体験。
               </div>
               <div>
-                <div class="font-bold text-white mb-1">💬 リッチMCP構築例（Slack統合）</div>
-                Prompts：「最近のスレッドを要約」テンプレ／Resources：スレッドを公開→クライアントがインデックス／Tools：search・channel読み取り／Sampling：要約に活用
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">リッチMCP構築例（Slack統合）</div>
+                Prompts：「最近のスレッドを要約」テンプレ／Resources：最近のスレッドを直接公開→クライアントがインデックス可／Tools：search・channel読み取り・thread読み取り／Sampling：thread要約に活用
               </div>
               <div>
-                <div class="font-bold text-white mb-1">🌐 Local → Web 移行（次の大進化）</div>
-                過去6-7か月で<strong>1万MCPサーバー</strong>構築もほぼローカル。MCPサーバー = <strong>「Webサイト」そのもの</strong>に。OAuth 2.1（Authorization）＋ Streamable HTTP（Scaling）が鍵。
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">Local → Web 移行</div>
+                過去6-7か月で<strong>1万MCPサーバー</strong>構築もほぼローカル。MCPサーバー = <strong>「Webサイト」そのもの</strong>に。必要な2要素：OAuth 2.1（Authorization）＋ Streamable HTTP（Scaling）。
               </div>
               <div>
-                <div class="font-bold text-white mb-1">🔐 Authorization（OAuth 2.1）</div>
-                <strong>A</strong>：<code class="font-mono">mcp.payment.com</code>公開→OAuth Flow→信頼済み会社に直接接続（Docker不要）。<strong>B（エンタープライズ）</strong>：社内MCPをAzure AD/Okta等のSSOと連携。
-              </div>
-              <div>
-                <div class="font-bold text-white mb-1">🚀 今後のロードマップ</div>
-                ①Asynchronous Tasks ②Elicitation（MCPサーバーがユーザー入力要求）③<strong>公式レジストリ</strong> ④マルチモダリティ
+                <div class="font-sans font-semibold text-ink-900 text-sm tracking-wide mb-2">今後のロードマップ</div>
+                ①Asynchronous Tasks（数時間かかるタスク向けプリミティブ）②Elicitation（MCPサーバーがユーザー入力要求）③<strong>公式レジストリ</strong>（中央検索/公開ハブ）④マルチモダリティ
               </div>
             </div>
           </details>
         </div>
-      </div>
-    </div>
+      </article>
 
+    </div>
   </div>
 </section>
 
-<section id="practices" class="py-24 px-6 bg-gradient-to-b from-ink-900 to-ink-950">
-  <div class="max-w-5xl mx-auto">
-    <div class="text-sm font-semibold text-orange-400 mb-3">⭐ 6大ベストプラクティス</div>
-    <h2 class="text-4xl md:text-5xl font-black mb-4">
-      Anthropic社内の<span class="text-gradient">80%</span>が<br/>毎日やってること。
-    </h2>
-    <p class="text-ink-300 mb-12 max-w-3xl">Calの25分トークからエッセンスだけ抽出。公式ドキュメントには書かれない実務パターン。</p>
+<!-- DIVIDER -->
+<div class="border-t border-ink-900/15"></div>
 
-    <div class="space-y-4">
-      <details class="glass-light rounded-2xl overflow-hidden">
-        <summary class="p-6 flex items-start gap-4 hover:bg-white/5 transition">
-          <div class="text-2xl font-black text-gradient">01</div>
+<!-- BEST PRACTICES -->
+<section id="practices" class="px-6 py-24 bg-cream-50">
+  <div class="max-w-5xl mx-auto">
+    <div class="grid md:grid-cols-12 gap-8 mb-14 items-end">
+      <div class="md:col-span-8">
+        <div class="tag mb-4">Six Best Practices</div>
+        <h2 class="font-serif-jp text-4xl md:text-5xl font-medium leading-tight text-ink-900">
+          Anthropic社内の<span class="italic text-clay-600">80%</span>が、<br/>毎日やっていること。
+        </h2>
+      </div>
+      <div class="md:col-span-4 text-sm text-ink-700 font-serif leading-relaxed">
+        Calの25分トークからエッセンスだけ抽出。公式ドキュメントには書かれない実務パターン。
+      </div>
+    </div>
+
+    <div class="rule-between border-t border-ink-900/15">
+      <details class="group py-2">
+        <summary class="py-6 flex items-start gap-6 hover:bg-cream-100/50 transition px-2 -mx-2">
+          <div class="font-serif text-3xl font-medium text-clay-600 w-14 shrink-0">01</div>
           <div class="flex-1">
-            <div class="font-bold text-lg mb-1">claude.md ファイル</div>
-            <div class="text-sm text-ink-400">セッション/チーム間で状態共有する主な方法</div>
+            <div class="font-serif-jp text-xl font-medium text-ink-900 mb-1">claude.md ファイル</div>
+            <div class="text-sm text-ink-700">セッション / チーム間で状態共有する主な方法</div>
           </div>
-          <svg class="chevron w-5 h-5 text-ink-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          <svg class="chevron w-5 h-5 text-ink-700 mt-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/></svg>
         </summary>
-        <div class="px-6 pb-6 text-ink-300 text-sm leading-relaxed">
-          起動時に作業ディレクトリの<code class="font-mono bg-black/40 px-2 py-0.5 rounded text-xs">claude.md</code>がコンテキストに自動投入。配置場所は<strong>プロジェクト直下（チェックイン共有）</strong> or <strong>ホームディレクトリ（個人設定）</strong>。内容は「単体テスト実行方法」「プロジェクト概要」「スタイルガイド」など。
+        <div class="pb-8 pl-20 pr-6 font-serif text-ink-800 leading-[1.8]">
+          起動時に作業ディレクトリの<code class="font-mono text-sm bg-cream-200 px-1.5 py-0.5">claude.md</code>がコンテキストに自動投入。配置場所は<strong>プロジェクト直下（チェックイン共有）</strong>or <strong>ホームディレクトリ（個人設定）</strong>。内容は「単体テスト実行方法」「プロジェクト概要」「スタイルガイド」など。新モデル（Cloud 4等）に切り替えたら見直すタイミング。
         </div>
       </details>
-
-      <details class="glass-light rounded-2xl overflow-hidden">
-        <summary class="p-6 flex items-start gap-4 hover:bg-white/5 transition">
-          <div class="text-2xl font-black text-gradient">02</div>
+      <details class="group py-2">
+        <summary class="py-6 flex items-start gap-6 hover:bg-cream-100/50 transition px-2 -mx-2">
+          <div class="font-serif text-3xl font-medium text-clay-600 w-14 shrink-0">02</div>
           <div class="flex-1">
-            <div class="font-bold text-lg mb-1">権限管理 / autoacceptモード</div>
-            <div class="text-sm text-ink-400">Shift+Tab で自動承認、特定bashコマンドは常に許可設定</div>
+            <div class="font-serif-jp text-xl font-medium text-ink-900 mb-1">権限管理 / autoacceptモード</div>
+            <div class="text-sm text-ink-700">Shift+Tab で自動承認、特定bashコマンドは常に許可設定</div>
           </div>
-          <svg class="chevron w-5 h-5 text-ink-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          <svg class="chevron w-5 h-5 text-ink-700 mt-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/></svg>
         </summary>
-        <div class="px-6 pb-6 text-ink-300 text-sm leading-relaxed">
+        <div class="pb-8 pl-20 pr-6 font-serif text-ink-800 leading-[1.8]">
           読み取りはそのまま実行、書き込み・bash時はUI確認。<strong>Shift+Tabでautoacceptモード</strong>。設定で「特定bashコマンドは常に許可」可能 → ワークフロー高速化。
         </div>
       </details>
-
-      <details class="glass-light rounded-2xl overflow-hidden">
-        <summary class="p-6 flex items-start gap-4 hover:bg-white/5 transition">
-          <div class="text-2xl font-black text-gradient">03</div>
+      <details class="group py-2">
+        <summary class="py-6 flex items-start gap-6 hover:bg-cream-100/50 transition px-2 -mx-2">
+          <div class="font-serif text-3xl font-medium text-clay-600 w-14 shrink-0">03</div>
           <div class="flex-1">
-            <div class="font-bold text-lg mb-1">CLI優先の統合セットアップ</div>
-            <div class="text-sm text-ink-400">MCPより先にCLIツール（gh等）を使わせる</div>
+            <div class="font-serif-jp text-xl font-medium text-ink-900 mb-1">CLI優先の統合セットアップ</div>
+            <div class="text-sm text-ink-700">MCPより先にCLIツール（gh等）を使わせる</div>
           </div>
-          <svg class="chevron w-5 h-5 text-ink-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          <svg class="chevron w-5 h-5 text-ink-700 mt-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/></svg>
         </summary>
-        <div class="px-6 pb-6 text-ink-300 text-sm leading-relaxed">
-          CLIツール（<code class="font-mono bg-black/40 px-2 py-0.5 rounded text-xs">gh</code>等）はインストールしてClaude Codeに使わせる。<strong>MCPサーバーよりCLIが優先</strong>。Anthropic社内では<strong>coup</strong>と呼ぶカスタムツールを使用。
+        <div class="pb-8 pl-20 pr-6 font-serif text-ink-800 leading-[1.8]">
+          CLIツール（<code class="font-mono text-sm bg-cream-200 px-1.5 py-0.5">gh</code>等）はインストールしてClaude Codeに使わせる。<strong>MCPサーバーよりCLIが優先</strong>（よく知られている・文書化されているもの）。Anthropic社内では<strong>coup</strong>と呼ぶカスタムツールを使用。
         </div>
       </details>
-
-      <details class="glass-light rounded-2xl overflow-hidden">
-        <summary class="p-6 flex items-start gap-4 hover:bg-white/5 transition">
-          <div class="text-2xl font-black text-gradient">04</div>
+      <details class="group py-2">
+        <summary class="py-6 flex items-start gap-6 hover:bg-cream-100/50 transition px-2 -mx-2">
+          <div class="font-serif text-3xl font-medium text-clay-600 w-14 shrink-0">04</div>
           <div class="flex-1">
-            <div class="font-bold text-lg mb-1">コンテキスト管理（200kトークン）</div>
-            <div class="text-sm text-ink-400">/clear と /compact の使い分け</div>
+            <div class="font-serif-jp text-xl font-medium text-ink-900 mb-1">コンテキスト管理（200kトークン）</div>
+            <div class="text-sm text-ink-700">/clear と /compact の使い分け</div>
           </div>
-          <svg class="chevron w-5 h-5 text-ink-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          <svg class="chevron w-5 h-5 text-ink-700 mt-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/></svg>
         </summary>
-        <div class="px-6 pb-6 text-ink-300 text-sm leading-relaxed">
-          コンテキストウィンドウ200,000トークン。警告が出たら：<code class="font-mono bg-black/40 px-2 py-0.5 rounded text-xs">/clear</code>（claude.md以外全部クリア）or <code class="font-mono bg-black/40 px-2 py-0.5 rounded text-xs">/compact</code>（要約メッセージ挿入→次セッションに引き継げるサマリ生成）。
+        <div class="pb-8 pl-20 pr-6 font-serif text-ink-800 leading-[1.8]">
+          コンテキストウィンドウ200,000トークン。警告が出たら：<code class="font-mono text-sm bg-cream-200 px-1.5 py-0.5">/clear</code>（claude.md以外全部クリア）or <code class="font-mono text-sm bg-cream-200 px-1.5 py-0.5">/compact</code>（要約メッセージ挿入→次セッションに引き継げるサマリ生成）。
         </div>
       </details>
-
-      <details class="glass-light rounded-2xl overflow-hidden">
-        <summary class="p-6 flex items-start gap-4 hover:bg-white/5 transition">
-          <div class="text-2xl font-black text-gradient">05</div>
+      <details class="group py-2">
+        <summary class="py-6 flex items-start gap-6 hover:bg-cream-100/50 transition px-2 -mx-2">
+          <div class="font-serif text-3xl font-medium text-clay-600 w-14 shrink-0">05</div>
           <div class="flex-1">
-            <div class="font-bold text-lg mb-1">計画とTo-Do（探索→計画→コーディング）</div>
-            <div class="text-sm text-ink-400">「いきなり修正して」ではなく「原因を見つけて修正計画を立てて報告」</div>
+            <div class="font-serif-jp text-xl font-medium text-ink-900 mb-1">計画とTo-Do（探索→計画→コーディング）</div>
+            <div class="text-sm text-ink-700">「いきなり修正して」ではなく「原因を見つけて修正計画を立てて報告」</div>
           </div>
-          <svg class="chevron w-5 h-5 text-ink-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          <svg class="chevron w-5 h-5 text-ink-700 mt-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/></svg>
         </summary>
-        <div class="px-6 pb-6 text-ink-300 text-sm leading-relaxed">
+        <div class="pb-8 pl-20 pr-6 font-serif text-ink-800 leading-[1.8]">
           大きなタスクではTo-Doリストを自動生成 → 注視して必要なら<strong>Esc + 軌道修正</strong>。<strong>Esc 2回で会話履歴に戻れる（隠れ機能）</strong>。
         </div>
       </details>
-
-      <details class="glass-light rounded-2xl overflow-hidden">
-        <summary class="p-6 flex items-start gap-4 hover:bg-white/5 transition">
-          <div class="text-2xl font-black text-gradient">06</div>
+      <details class="group py-2">
+        <summary class="py-6 flex items-start gap-6 hover:bg-cream-100/50 transition px-2 -mx-2">
+          <div class="font-serif text-3xl font-medium text-clay-600 w-14 shrink-0">06</div>
           <div class="flex-1">
-            <div class="font-bold text-lg mb-1">スマートなバイブコーディング</div>
-            <div class="text-sm text-ink-400">小変更+テスト、スクリーンショット活用、定期コミット</div>
+            <div class="font-serif-jp text-xl font-medium text-ink-900 mb-1">スマートなバイブコーディング</div>
+            <div class="text-sm text-ink-700">小変更+テスト、スクリーンショット活用、定期コミット</div>
           </div>
-          <svg class="chevron w-5 h-5 text-ink-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          <svg class="chevron w-5 h-5 text-ink-700 mt-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/></svg>
         </summary>
-        <div class="px-6 pb-6 text-ink-300 text-sm leading-relaxed">
-          ①小さな変更+テスト実行で確認 ②TypeScript/lintを定期チェック ③定期的にコミット ④<strong>スクリーンショット添付でデバッグ案内</strong>（マルチモーダル活用）
+        <div class="pb-8 pl-20 pr-6 font-serif text-ink-800 leading-[1.8]">
+          Enterして待つだけでなく：①小さな変更+テスト実行で確認 ②TypeScript/lintを定期チェック ③定期的にコミット（fallback可能に）④<strong>スクリーンショット添付でデバッグ案内</strong>（マルチモーダル活用）
         </div>
       </details>
     </div>
   </div>
 </section>
 
-<section id="mcp" class="py-24 px-6 bg-ink-950">
+<!-- DIVIDER -->
+<div class="border-t border-ink-900/15"></div>
+
+<!-- MCP 5 PRIMITIVES -->
+<section id="mcp" class="px-6 py-24">
   <div class="max-w-6xl mx-auto">
-    <div class="text-sm font-semibold text-orange-400 mb-3">🧩 MCPの5プリミティブ</div>
-    <h2 class="text-4xl md:text-5xl font-black mb-4">
-      大半のMCPは<span class="text-gradient">Toolsだけ</span>。<br/>差別化するなら残り4つ。
-    </h2>
-    <p class="text-ink-300 mb-12 max-w-3xl">MCP共同作成者Davidの深掘り講義から。過去6-7か月で1万MCPサーバーが構築されたがほぼToolsのみ。</p>
+    <div class="grid md:grid-cols-12 gap-8 mb-14 items-end">
+      <div class="md:col-span-8">
+        <div class="tag mb-4">MCP · 5 Primitives</div>
+        <h2 class="font-serif-jp text-4xl md:text-5xl font-medium leading-tight text-ink-900">
+          大半のMCPは<span class="italic text-clay-600">Toolsだけ</span>。<br/>差別化するなら残り4つ。
+        </h2>
+      </div>
+      <div class="md:col-span-4 text-sm text-ink-700 font-serif leading-relaxed">
+        MCP共同作成者Davidの深掘り講義から。過去6-7か月で1万MCPサーバーが構築された──が、ほぼToolsのみ。
+      </div>
+    </div>
 
-    <div class="grid md:grid-cols-3 gap-4">
-      <div class="glass-light rounded-2xl p-6 card-hover">
-        <div class="text-xs font-bold text-orange-400 mb-2">サーバー側 · ユーザー駆動</div>
-        <div class="text-xl font-bold mb-2">Prompts</div>
-        <div class="text-sm text-ink-300">事前定義テンプレ。ユーザーがスラッシュコマンドで直接コンテキストに追加。<strong>completion API</strong>でパラメータ自動補完。</div>
+    <div class="grid md:grid-cols-3 gap-[1px] bg-ink-900/10">
+      <div class="card p-8">
+        <div class="tag mb-4">Server · User-driven</div>
+        <div class="font-serif text-3xl font-medium text-ink-900 mb-3">Prompts</div>
+        <p class="font-serif text-ink-800 leading-[1.7]">事前定義テンプレ。ユーザーがスラッシュコマンドで直接コンテキストに追加。<strong>completion API</strong>でパラメータ自動補完。</p>
       </div>
-      <div class="glass-light rounded-2xl p-6 card-hover">
-        <div class="text-xs font-bold text-orange-400 mb-2">サーバー側 · アプリ駆動</div>
-        <div class="text-xl font-bold mb-2">Resources</div>
-        <div class="text-sm text-ink-300">生データ・コンテンツをファイル的に公開。例：DBスキーマ公開→Claudeが図化。<span class="text-orange-300">未開拓領域</span>。</div>
+      <div class="card p-8">
+        <div class="tag mb-4">Server · App-driven</div>
+        <div class="font-serif text-3xl font-medium text-ink-900 mb-3">Resources</div>
+        <p class="font-serif text-ink-800 leading-[1.7]">生データ・コンテンツをファイル的に公開。例：DBスキーマ公開→Claudeが図化。<em class="text-clay-600">未開拓領域</em>。</p>
       </div>
-      <div class="glass-light rounded-2xl p-6 card-hover">
-        <div class="text-xs font-bold text-orange-400 mb-2">サーバー側 · モデル駆動</div>
-        <div class="text-xl font-bold mb-2">Tools</div>
-        <div class="text-sm text-ink-300">最もよく知られた要素。モデル駆動でアクション実行。「魔法の瞬間」：モデルが初めて構築したツールを呼ぶとき。</div>
+      <div class="card p-8">
+        <div class="tag mb-4">Server · Model-driven</div>
+        <div class="font-serif text-3xl font-medium text-ink-900 mb-3">Tools</div>
+        <p class="font-serif text-ink-800 leading-[1.7]">最もよく知られた要素。モデル駆動でアクション実行。「魔法の瞬間」：モデルが初めて構築したツールを呼ぶとき。</p>
       </div>
-      <div class="glass-light rounded-2xl p-6 card-hover">
-        <div class="text-xs font-bold text-orange-400 mb-2">クライアント側</div>
-        <div class="text-xl font-bold mb-2">Sampling</div>
-        <div class="text-sm text-ink-300">MCPサーバーがクライアントに<strong>LLM補完を要求</strong>。APIキー追加不要。MCPチェーンで再帰的に使える。</div>
+      <div class="card p-8">
+        <div class="tag mb-4">Client-side</div>
+        <div class="font-serif text-3xl font-medium text-ink-900 mb-3">Sampling</div>
+        <p class="font-serif text-ink-800 leading-[1.7]">MCPサーバーがクライアントに<strong>LLM補完を要求</strong>。APIキー追加不要。MCPチェーンで再帰的に使える。<em class="text-clay-600">最もサポートが薄い</em>。</p>
       </div>
-      <div class="glass-light rounded-2xl p-6 card-hover">
-        <div class="text-xs font-bold text-orange-400 mb-2">クライアント側</div>
-        <div class="text-xl font-bold mb-2">Roots</div>
-        <div class="text-sm text-ink-300">開いているプロジェクト/ディレクトリをサーバーに伝える。例：gitコマンドMCPがIDEのworkspaceを認識。VS Codeが対応開始。</div>
+      <div class="card p-8">
+        <div class="tag mb-4">Client-side</div>
+        <div class="font-serif text-3xl font-medium text-ink-900 mb-3">Roots</div>
+        <p class="font-serif text-ink-800 leading-[1.7]">開いているプロジェクト/ディレクトリをサーバーに伝える。例：gitコマンドMCPがIDEのworkspaceを認識。VS Codeが対応開始。</p>
       </div>
-      <div class="glass-light rounded-2xl p-6 border-2 border-orange-500/50">
-        <div class="text-xs font-bold text-orange-400 mb-2">次の大進化</div>
-        <div class="text-xl font-bold mb-2">Local → Web</div>
-        <div class="text-sm text-ink-300">MCPサーバーが<strong>Webサイトそのもの</strong>に。<strong>OAuth 2.1</strong> + <strong>Streamable HTTP</strong>で本格的にエンタープライズ対応。</div>
+      <div class="card p-8 bg-ink-900 text-cream-100">
+        <div class="tag mb-4 text-clay-400">Next Evolution</div>
+        <div class="font-serif text-3xl font-medium text-cream-50 mb-3">Local → Web</div>
+        <p class="font-serif text-cream-200 leading-[1.7]">MCPサーバーが<strong>Webサイトそのもの</strong>に。<strong>OAuth 2.1</strong> + <strong>Streamable HTTP</strong>で本格的にエンタープライズ対応。</p>
       </div>
     </div>
   </div>
 </section>
 
-<section id="get" class="py-24 px-6 bg-gradient-to-br from-orange-600 via-pink-600 to-purple-700 relative overflow-hidden">
-  <div class="absolute inset-0 opacity-30" style="background-image: radial-gradient(circle at 20% 80%, white 0%, transparent 40%);"></div>
-  <div class="max-w-4xl mx-auto relative text-center">
-    <div class="text-sm font-semibold text-white/80 mb-3">🎁 LINE受け取り</div>
-    <h2 class="text-4xl md:text-6xl font-black text-white mb-6 leading-tight">
-      「知ってる」じゃなくて<br />
-      <span class="underline decoration-white/50 decoration-4 underline-offset-8">「やりきった」</span>へ。
+<!-- DIVIDER -->
+<div class="border-t border-ink-900/15"></div>
+
+<!-- CTA -->
+<section id="get" class="px-6 py-24 bg-ink-900 text-cream-100 relative overflow-hidden">
+  <div class="absolute top-0 right-0 w-[400px] h-[400px] rounded-full opacity-20" style="background: radial-gradient(circle, #D97757 0%, transparent 70%); transform: translate(30%, -30%);"></div>
+  <div class="max-w-4xl mx-auto relative">
+    <div class="hero-eyebrow mb-8 text-clay-400">LINE限定 · 続編アップデート付き</div>
+    <h2 class="font-serif-jp text-5xl md:text-7xl font-medium mb-8 leading-[1.1]">
+      「知ってる」じゃなくて、<br/><span class="italic text-clay-400">「やりきった」</span>へ。
     </h2>
-    <p class="text-white/90 text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
-      このページの全コンテンツ + Anthropic公式13コースまとめ + 続編のアップデートを<br class="hidden md:block" />LINEで受け取れます。
+    <p class="font-serif text-lg md:text-xl text-cream-200 mb-12 max-w-2xl leading-[1.8]">
+      このページの全コンテンツ + Anthropic公式13コースまとめ + 続編アップデートを、LINEで受け取れます。
     </p>
-    <a href="https://utage-system.com/line/open/t1nekS7QYxdF" class="inline-flex items-center gap-3 px-10 py-5 rounded-full bg-white text-orange-600 font-black text-xl hover:scale-105 transition shadow-2xl">
+    <a href="https://utage-system.com/line/open/t1nekS7QYxdF" class="inline-flex items-center gap-4 px-10 py-5 bg-clay-500 text-cream-50 font-medium text-lg hover:bg-clay-600 transition">
       LINEで受け取る
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
     </a>
-    <div class="mt-6 text-white/70 text-sm">登録後、即配信 · 解除もワンタップ</div>
+    <div class="mt-8 text-cream-200 text-sm">登録後、即配信 · 解除もワンタップ</div>
   </div>
 </section>
 
-<footer class="py-12 px-6 bg-ink-950 border-t border-white/5">
-  <div class="max-w-6xl mx-auto text-center text-ink-400 text-sm space-y-3">
-    <div class="flex items-center justify-center gap-2 mb-4">
-      <div class="w-6 h-6 rounded-md bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center font-black text-xs">C</div>
-      <span class="font-bold text-white">Code w/ Claude</span>
-    </div>
-    <div>© 2026 · Unofficial Japanese guide to Anthropic AI Engineer Fair sessions</div>
-    <div class="flex items-center justify-center gap-4 text-xs">
-      <a href="https://www.youtube.com/@anthropic-ai" target="_blank" class="hover:text-orange-400 transition">Anthropic YouTube</a>
-      <span>·</span>
-      <a href="https://code.claude.com/docs/ja/best-practices" target="_blank" class="hover:text-orange-400 transition">公式ベストプラクティス</a>
+<!-- FOOTER -->
+<footer class="px-6 py-12 bg-cream-100 border-t border-ink-900/15">
+  <div class="max-w-6xl mx-auto">
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div class="flex items-center gap-2.5">
+        <svg viewBox="0 0 32 32" class="w-6 h-6 text-clay-500" fill="currentColor">
+          <path d="M16 3 L28 10 L28 22 L16 29 L4 22 L4 10 Z" opacity="0.15"/>
+          <path d="M16 8 L22 12 L22 20 L16 24 L10 20 L10 12 Z"/>
+        </svg>
+        <span class="font-serif text-base">Code w/ Claude</span>
+      </div>
+      <div class="text-xs text-ink-700 tracking-wider uppercase">
+        Unofficial Japanese Guide · AIE 2026
+      </div>
+      <div class="flex items-center gap-6 text-sm text-ink-700">
+        <a href="https://www.youtube.com/@anthropic-ai" target="_blank" class="link-underline hover:text-ink-900">Anthropic YouTube</a>
+        <a href="https://code.claude.com/docs/ja/best-practices" target="_blank" class="link-underline hover:text-ink-900">公式ベストプラクティス</a>
+      </div>
     </div>
   </div>
 </footer>
